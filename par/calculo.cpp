@@ -190,6 +190,7 @@ void Espacio::calcular_posicion(vector<double> &fuerza_x, vector<double> &fuerza
 
 void Espacio::calculo_rebotes()
 {
+    #pragma omp parallel for
     for(int i = 0 ; i < num_asteroides ; ++i)
     {
         for(int j = i+1 ; j < num_asteroides ; ++j)
