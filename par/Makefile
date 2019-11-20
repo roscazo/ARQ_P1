@@ -1,12 +1,12 @@
 CC = g++
 
 CFLAGS = -std=c++14 -Wall -Wextra -Wno-deprecated -Werror -pedantic -pedantic-errors -O3 -fopenmp
-TARGET = nasteroids-par
+TARGET = calculo
 
 all: $(TARGET)
 
 $(TARGET): $(TARGET).cpp 
-	$(CC) $(CFLAGS) $(TARGET).cpp calculo.cpp -o $(TARGET) 
+	$(CC) $(CFLAGS) $(TARGET).cpp nasteroids-par.cpp -o nasteroids-par 
 
 clean:
 	$(RM) $(TARGET)
