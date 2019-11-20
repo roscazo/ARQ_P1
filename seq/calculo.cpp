@@ -155,12 +155,12 @@ void Espacio::calcular_posicion(vector<double> &fuerza_x, vector<double> &fuerza
         ay = fuerza_y[i] / asteroides[i].masa;
         
         // Cálculo velocidad
-        asteroides[i].velx += ceil(ax*T*100000)/100000;
-        asteroides[i].vely += ceil(ay*T*100000)/100000;
+        asteroides[i].velx += ax*T;
+        asteroides[i].vely += ay*T;
 
         // Cálculo posición
-        asteroides[i].posx += ceil(asteroides[i].velx*T*100000)/100000;
-        asteroides[i].posy += ceil(asteroides[i].vely*T*100000)/100000;
+        asteroides[i].posx += asteroides[i].velx*T;
+        asteroides[i].posy += asteroides[i].vely*T;
 
         // Rebote con los bordes
         if(asteroides[i].posx <= 0.0) 

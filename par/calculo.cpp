@@ -10,17 +10,25 @@
 #define MASA 1000
 #define SDM 50
 
+/**
+ * 
+ * 
+ **/
 void Espacio::simulacion()
 {
     vector<double> fuerza_x(num_asteroides, 0.0);
 	vector<double> fuerza_y(num_asteroides, 0.0); 
-
+    
     calcular_fuerzas(fuerza_x, fuerza_y);
     calcular_posicion(fuerza_x, fuerza_y);
     calculo_rebotes();
     print_end();
 }
 
+/**
+ * Constructor de la clase Espacio
+ * 
+ **/
 Espacio::Espacio(int na, int ni, int np, int s) :
     asteroides{}, planetas{},
     num_asteroides{na}, num_iteraciones{ni}, num_planetas{np}, seed{s}
@@ -72,6 +80,10 @@ Espacio::Espacio(int na, int ni, int np, int s) :
     init_conf.close();
 }
 
+/**
+ * 
+ * 
+ **/
 double Espacio::angulo(double xdif, double ydif)
 {
     double ang; 
@@ -85,69 +97,106 @@ double Espacio::angulo(double xdif, double ydif)
     return ang = atan(m);
 }
 
+/**
+ * 
+ * 
+ **/
 void Espacio::calcular_fuerzas(vector<double> &fuerza_x, vector<double> &fuerza_y)
 {
-    #pragma omp parallel for
-    for(int i = 0 ; i < num_asteroides ; ++i)
+    vector<double> private_x_forces;
+	vector<double> private_y_forces;
+
+    //omp_set_num_threads(16);	
+	#pragma omp parallel 
     {
-        // Atracción con otros asteroides
-        for(int j = i+1 ; j < num_asteroides ; ++j)
+        //Defining variables to identify each thread.
+		const int num_threads = omp_get_num_threads();
+		const int thread_id = omp_get_thread_num();
+
+		//Creating a private vector on each thread to avoid conficts and reduction overhead.
+		#pragma omp single
+		{
+			private_x_forces = vector<double> (num_asteroides*num_threads, 0.0);
+			private_y_forces = vector<double> (num_asteroides*num_threads, 0.0);
+		}
+
+        #pragma omp for
+        for(int i = 0 ; i < num_asteroides ; ++i)
         {
-            //cout << "\nA " << i << " y A " << j << "\n";
-            double dist, ang, fx, fy, xdif, ydif;
-            // Cálculo de la distancia
-            xdif = asteroides[i].posx - asteroides[j].posx;
-            ydif = asteroides[i].posy - asteroides[j].posy; 
-            dist = sqrt(pow(xdif,2) + pow(ydif,2));
-            if(dist > DMIN)
+            // Atracción con otros asteroides
+            for(int j = i+1 ; j < num_asteroides ; ++j)
             {
+                //cout << "\nA " << i << " y A " << j << "\n";
+                double dist, ang, fx, fy, xdif, ydif;
+                // Cálculo de la distancia
+                xdif = asteroides[i].posx - asteroides[j].posx;
+                ydif = asteroides[i].posy - asteroides[j].posy; 
+                dist = sqrt(pow(xdif,2) + pow(ydif,2));
+                if(dist > DMIN)
+                {
+                    // Cálculo del ángulo de influencia
+                    ang = angulo(xdif, ydif);
+                    //cout << "Ángulo " << ang << "\n";
+                    // Cálculo de la fuerza
+                    double op1 = G * asteroides[i].masa * asteroides[j].masa;
+                    double op2 = pow(dist, 2);
+                    fx = (op1/op2)*cos(ang);
+                    fy = (op1/op2)*sin(ang);
+                    //cout << "Fuerza " << sqrt(pow(fx,2) + pow(fy,2)) << "\n";
+                    // Añade las fuerzas ejercidas del asteroide i a j
+                    private_x_forces[thread_id*num_asteroides+i] += fx; 
+                    private_y_forces[thread_id*num_asteroides+i] += fy;
+                    // Añade las fuerzas ejercidas del asteroide i a j en dirección opuesta
+                    private_x_forces[thread_id*num_asteroides+j] -= fx; 
+                    private_y_forces[thread_id*num_asteroides+j] -= fy;
+                }
+            }
+            // Atracción con planetas
+            for(int j = 0 ; j < num_planetas ; ++j)
+            {
+                //cout << "\nA " << i << " y P " << j << "\n";
+                double dist, ang, fx, fy, xdif, ydif;
+                // Cálculo de la distancia
+                xdif = asteroides[i].posx - planetas[j].posx;
+                ydif = asteroides[i].posy - planetas[j].posy; 
+                dist = sqrt(pow(xdif,2) + pow(ydif,2));
                 // Cálculo del ángulo de influencia
                 ang = angulo(xdif, ydif);
                 //cout << "Ángulo " << ang << "\n";
                 // Cálculo de la fuerza
-                double op1 = G * asteroides[i].masa * asteroides[j].masa;
+                double op1 = G * asteroides[i].masa * planetas[j].masa;
                 double op2 = pow(dist, 2);
                 fx = (op1/op2)*cos(ang);
                 fy = (op1/op2)*sin(ang);
                 //cout << "Fuerza " << sqrt(pow(fx,2) + pow(fy,2)) << "\n";
-                // Añade las fuerzas ejercidas del asteroide i a j
-                fuerza_x[i] += fx; 
-                fuerza_y[i] += fy;
-                // Añade las fuerzas ejercidas del asteroide i a j en dirección opuesta
-                fuerza_x[j] -= fx; 
-                fuerza_y[j] -= fy;
+                // Añade las fuerzas ejercida por el planeta al asteroide
+                private_x_forces[thread_id*num_asteroides+i] += fx; 
+                private_y_forces[thread_id*num_asteroides+i] += fy;
             }
         }
-        // Atracción con planetas
-        for(int j = 0 ; j < num_planetas ; ++j)
+        //Make a manual reduction of the private vectors 
+		#pragma omp for 
+		for(int l = 0; l < num_asteroides; ++l)
         {
-            //cout << "\nA " << i << " y P " << j << "\n";
-            double dist, ang, fx, fy, xdif, ydif;
-            // Cálculo de la distancia
-            xdif = asteroides[i].posx - planetas[j].posx;
-            ydif = asteroides[i].posy - planetas[j].posy; 
-            dist = sqrt(pow(xdif,2) + pow(ydif,2));
-            // Cálculo del ángulo de influencia
-            ang = angulo(xdif, ydif);
-            //cout << "Ángulo " << ang << "\n";
-            // Cálculo de la fuerza
-            double op1 = G * asteroides[i].masa * planetas[j].masa;
-            double op2 = pow(dist, 2);
-            fx = (op1/op2)*cos(ang);
-            fy = (op1/op2)*sin(ang);
-            //cout << "Fuerza " << sqrt(pow(fx,2) + pow(fy,2)) << "\n";
-            // Añade las fuerzas ejercida por el planeta al asteroide
-            fuerza_x[i] += fx; 
-            fuerza_y[i] += fy;
-        }
-        if(fuerza_x[i] > 100) fuerza_x[i] = 100;
-        if(fuerza_y[i] > 100) fuerza_y[i] = 100;
+			for(int t = 0; t < num_threads; ++t)
+            {
+				fuerza_x[l] += private_x_forces[num_asteroides*t+l];
+				fuerza_y[l] += private_y_forces[num_asteroides*t+l];
+                if(fuerza_x[l] > 100) fuerza_x[l] = 100;
+                if(fuerza_y[l] > 100) fuerza_y[l] = 100;
+			}
+		}
     }
 }
 
+/**
+ * 
+ * 
+ **/
 void Espacio::calcular_posicion(vector<double> &fuerza_x, vector<double> &fuerza_y)
 {
-    #pragma omp parallel for
+    //omp_set_num_threads(16);
+    #pragma omp parallel for 
     for(int i = 0 ; i < num_asteroides ; ++i)
     {
         double ax, ay;
@@ -157,12 +206,12 @@ void Espacio::calcular_posicion(vector<double> &fuerza_x, vector<double> &fuerza
         ay = fuerza_y[i] / asteroides[i].masa;
         
         // Cálculo velocidad
-        asteroides[i].velx += ceil(ax*T*100000)/100000;
-        asteroides[i].vely += ceil(ay*T*100000)/100000;
+        asteroides[i].velx += ax*T;
+        asteroides[i].vely += ay*T;
 
         // Cálculo posición
-        asteroides[i].posx += ceil(asteroides[i].velx*T*100000)/100000;
-        asteroides[i].posy += ceil(asteroides[i].vely*T*100000)/100000;
+        asteroides[i].posx += asteroides[i].velx*T;
+        asteroides[i].posy += asteroides[i].vely*T;
 
         // Rebote con los bordes
         if(asteroides[i].posx <= 0.0) 
@@ -188,8 +237,13 @@ void Espacio::calcular_posicion(vector<double> &fuerza_x, vector<double> &fuerza
     }
 }
 
+/**
+ * 
+ * 
+ **/
 void Espacio::calculo_rebotes()
-{
+{ 
+    //omp_set_num_threads(16);
     #pragma omp parallel for
     for(int i = 0 ; i < num_asteroides ; ++i)
     {
@@ -218,6 +272,10 @@ void Espacio::calculo_rebotes()
     }
 }
 
+/**
+ * 
+ * 
+ **/
 void Espacio::print_end()
 {
     std::ofstream out("out.txt"); 
