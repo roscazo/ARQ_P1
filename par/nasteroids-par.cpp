@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
     coso.open("test.txt", ios_base::app);
     coso << diff.count()/1000000.0 << endl;
     coso.close();
-    //HOLA
+
     return 0;
 }
 
