@@ -48,7 +48,7 @@ Espacio::Espacio(int na, int ni, int np, int s) :
     asteroides.reserve(num_asteroides);
 	planetas.reserve(num_planetas); 
     
-    // Random distributions
+    // Distribución random
     default_random_engine re{seed};
     uniform_real_distribution<double> xdist{0.0, nextafter(WIDTH, numeric_limits<double>::max())};
     uniform_real_distribution<double> ydist{0.0, nextafter(HEIGHT, numeric_limits<double>::max())};
@@ -106,14 +106,15 @@ void Espacio::calcular_fuerzas(vector<double> &fuerza_x, vector<double> &fuerza_
     vector<double> private_x_forces;
 	vector<double> private_y_forces;
 
-    //omp_set_num_threads(16);	
+    omp_set_num_threads(8);	
 	#pragma omp parallel 
     {
-        //Defining variables to identify each thread.
+     
+        //Var para identificar cada thread
 		const int num_threads = omp_get_num_threads();
 		const int thread_id = omp_get_thread_num();
 
-		//Creating a private vector on each thread to avoid conficts and reduction overhead.
+		//Creación de vectores privados en cada thread para evitar conflictos y reducción del overhead
 		#pragma omp single
 		{
 			private_x_forces = vector<double> (num_asteroides*num_threads, 0.0);
@@ -174,7 +175,7 @@ void Espacio::calcular_fuerzas(vector<double> &fuerza_x, vector<double> &fuerza_
                 private_y_forces[thread_id*num_asteroides+i] += fy;
             }
         }
-        //Make a manual reduction of the private vectors 
+        //Reducción manual de los vectores privados
 		#pragma omp for 
 		for(int l = 0; l < num_asteroides; ++l)
         {
@@ -195,7 +196,6 @@ void Espacio::calcular_fuerzas(vector<double> &fuerza_x, vector<double> &fuerza_
  **/
 void Espacio::calcular_posicion(vector<double> &fuerza_x, vector<double> &fuerza_y)
 {
-    //omp_set_num_threads(16);
     #pragma omp parallel for 
     for(int i = 0 ; i < num_asteroides ; ++i)
     {
@@ -243,8 +243,6 @@ void Espacio::calcular_posicion(vector<double> &fuerza_x, vector<double> &fuerza
  **/
 void Espacio::calculo_rebotes()
 { 
-    //omp_set_num_threads(16);
-    #pragma omp parallel for
     for(int i = 0 ; i < num_asteroides ; ++i)
     {
         for(int j = i+1 ; j < num_asteroides ; ++j)
