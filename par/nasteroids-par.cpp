@@ -49,12 +49,12 @@ int main(int argc, char *argv[])
 
     auto t2 = clk :: now();
     auto diff = chrono::duration_cast<chrono::microseconds>(t2-t1);
-    //cout << "\nTime = " << diff.count()/1000000.0 << " segundos" << endl;
+
     ofstream coso;
     coso.open("test.txt", ios_base::app);
     coso << diff.count()/1000000.0 << endl;
     coso.close();
-
+    //HOLA
     return 0;
 }
 
