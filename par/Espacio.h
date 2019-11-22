@@ -8,6 +8,9 @@
 
 using namespace std;
 
+/**
+ * Clase Asteroide
+ */
 class Asteroide
 {
 public:
@@ -26,6 +29,9 @@ public:
 
 };
 
+/**
+ * Clase Planeta
+ */
 class Planeta
 {
 public:
@@ -42,6 +48,9 @@ public:
 
 };
 
+/**
+ * Clase Espacio
+ */
 class Espacio
 {
 public:

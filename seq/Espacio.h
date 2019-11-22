@@ -57,7 +57,7 @@ private:
     int num_asteroides;
     int num_iteraciones;
     int num_planetas;
-    int seed;   
+    int seed;  
 
     double angulo(double xdif, double ydif);
     void calcular_fuerzas(vector<double> &fuerza_x, vector<double> &fuerza_y);

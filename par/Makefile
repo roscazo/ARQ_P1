@@ -9,4 +9,4 @@ $(TARGET): $(TARGET).cpp
 	$(CC) $(CFLAGS) $(TARGET).cpp nasteroids-par.cpp -o nasteroids-par 
 
 clean:
-	$(RM) $(TARGET)
+	$(RM) nasteroids-par
