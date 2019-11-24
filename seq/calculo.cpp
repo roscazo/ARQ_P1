@@ -11,21 +11,6 @@
 using namespace std;
 
 /**
- * Inicia la simulación del movimiento de los asteroides
- */
-void Espacio::simulacion()
-{
-    // Crea los vectores de las fuerzas en cada eje y los inicializa en 0
-    vector<double> fuerza_x(num_asteroides, 0.0);
-	vector<double> fuerza_y(num_asteroides, 0.0); 
-    // Llamada a las funciones de la clase Espacio
-    calcular_fuerzas(fuerza_x, fuerza_y);
-    calcular_posicion(fuerza_x, fuerza_y);
-    calculo_rebotes();
-    print_end();
-}
-
-/**
  * Constructor de la clase Espacio:
  *  - Guarda los parámetros de entrada
  *  - Inicializa los vectores de asteroides y planetas
@@ -100,21 +85,18 @@ Espacio::Espacio(int na, int ni, int np, int s) :
 }
 
 /**
- * Calcula el ángulo de influencia de la fuerza de un asteroide o planeta sobre un asteroide
- * @param xdif Diferencia en la distancia en el eje x
- * @param ydif Diferencia en la distancia en el eje y
+ * Inicia la simulación del movimiento de los asteroides
  */
-double Espacio::angulo(double xdif, double ydif)
+void Espacio::simulacion()
 {
-    double ang; 
-    // Cálculo de la pendiente
-    double m = ydif / xdif;
-
-    if(m < -1) m = -1; // Si es menor que -1 
-    if(m > 1) m = 1; // Si es mayor que 1
-
-    // Cálculo del ángulo de influencia
-    return ang = atan(m);
+    // Crea los vectores de las fuerzas en cada eje y los inicializa en 0
+    vector<double> fuerza_x(num_asteroides, 0.0);
+	vector<double> fuerza_y(num_asteroides, 0.0); 
+    // Llamada a las funciones de la clase Espacio
+    calcular_fuerzas(fuerza_x, fuerza_y);
+    calcular_posicion(fuerza_x, fuerza_y);
+    calculo_rebotes();
+    print_end();
 }
 
 /**
@@ -238,7 +220,7 @@ void Espacio::calculo_rebotes()
             ydif = asteroides[i].posy - asteroides[j].posy; 
             dist = sqrt(pow(xdif,2) + pow(ydif,2));
             // Comprueba que la distancia entre los asteroides es la mínima para chocar
-            if(dist < DMIN)
+            if(dist <= DMIN)
             {
                 // Variables auxiliares
                 double vx = asteroides[j].velx; 
@@ -252,6 +234,24 @@ void Espacio::calculo_rebotes()
             } 
         } // End loop 2
     } // End loop 1
+}
+
+/**
+ * Calcula el ángulo de influencia de la fuerza de un asteroide o planeta sobre un asteroide
+ * @param xdif Diferencia en la distancia en el eje x
+ * @param ydif Diferencia en la distancia en el eje y
+ */
+double Espacio::angulo(double xdif, double ydif)
+{
+    double ang; 
+    // Cálculo de la pendiente
+    double m = ydif / xdif;
+
+    if(m < -1) m = -1; // Si es menor que -1 
+    if(m > 1) m = 1; // Si es mayor que 1
+
+    // Cálculo del ángulo de influencia
+    return ang = atan(m);
 }
 
 /**

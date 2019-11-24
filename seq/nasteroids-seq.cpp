@@ -29,10 +29,12 @@ int main(int argc, char *argv[])
     try {
         // Comprueba el número de parámteros de entrada
         if(argc != 5) throw invalid_argument("Wrong arguments \nCorrect use: \nnasteroids-seq num_asteroides num_iteraciones num_planetas semilla" );
-        // Comprueba que todos los parámetros son positivos
-        for(int i=0; i<argc ; ++i)
+        // Comprueba que todos los parámetros son enteros positivos
+        for(int i=1; i<argc ; ++i)
         {
-            if(atoi(argv[i]) < 0) throw invalid_argument("Arguments cannot be negative");
+            char* endp;
+            long int aux = strtol(argv[i], &endp, 10);
+            if ((errno == ERANGE) || (*endp) || (aux < 0)) throw invalid_argument("\nIncorrect arguments: only positive integers allowed");
         }
     }
     // Devuelve el error en caso de que haya

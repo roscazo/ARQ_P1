@@ -23,37 +23,42 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-    using clk = chrono::high_resolution_clock;
-    auto t1 = clk :: now();
+    // using clk = chrono::high_resolution_clock;
+    // auto t1 = clk :: now();
 
+    // Comprueba que los valores de entrada son los correctos
     try {
+        // Comprueba el número de parámteros de entrada
         if(argc != 5) throw invalid_argument("Wrong arguments \nCorrect use: \nnasteroids-seq num_asteroides num_iteraciones num_planetas semilla" );
-
-        for(int i=0; i<argc ; ++i)
+        // Comprueba que todos los parámetros son enteros positivos
+        for(int i=1; i<argc ; ++i)
         {
-            if(atoi(argv[i]) < 0) throw invalid_argument("Arguments cannot be negative");
+            char* endp;
+            long int aux = strtol(argv[i], &endp, 10);
+            if ((errno == ERANGE) || (*endp) || (aux < 0)) throw invalid_argument("\nIncorrect arguments: only positive integers allowed");
         }
     }
-
+    // Devuelve el error en caso de que haya
     catch(invalid_argument &e)
     {
         cerr << "Exception: " << e.what() << endl;
         return -1;
     }
-
+    // Guarda los parámetros de entrada en sus variables correspondientes
     num_asteroides = atoi(argv[1]); num_iteraciones = atoi(argv[2]); num_planetas = atoi(argv[3]); seed = atoi(argv[4]);
-    
-    Espacio main(num_asteroides, num_iteraciones, num_planetas, seed);   
-
+    // Llamada al constructor de Espacio
+    Espacio main(num_asteroides, num_iteraciones, num_planetas, seed);     
+    // Comienza la simulación del movimiento de los asteroides. Se crea un loop que repita la simulación 
+    // el número de iteraciones especificado
     for(int k = 0; k < num_iteraciones; ++k) main.simulacion();
 
-    auto t2 = clk :: now();
-    auto diff = chrono::duration_cast<chrono::microseconds>(t2-t1);
-
-    ofstream coso;
-    coso.open("test.txt", ios_base::app);
-    coso << diff.count()/1000000.0 << endl;
-    coso.close();
+    // auto t2 = clk :: now();
+    // auto diff = chrono::duration_cast<chrono::microseconds>(t2-t1);
+    // //cout << "\nTime = " << diff.count()/1000000.0 << " segundos" << endl;
+    // ofstream coso;
+    // coso.open("test.txt", ios_base::app);
+    // coso << diff.count()/1000000.0 << endl;
+    // coso.close();
 
     return 0;
 }
