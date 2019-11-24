@@ -310,7 +310,7 @@ void Espacio::print_end()
     // Ecribe las posiciones, velocidades y masa de los asteroides en el archivo de salida
     for(int i = 0 ; i < num_asteroides ; ++i)
         out << asteroides[i].posx << " " << asteroides[i].posy << " " << asteroides[i].velx << " " 
-           << asteroides[i].vely << " " << asteroides[i].masa << " " << endl;
+           << asteroides[i].vely << " " << asteroides[i].masa << endl;
     // Cierra el archivo
     out.close();
 }
